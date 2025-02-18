@@ -18,12 +18,25 @@ class PID:
         return PID_calc * step_size
 
 class Controller:
-    def __init__(self, turret_lat, turret_long, turret_alt):
+    def __init__(self, turret_lat, turret_long, turret_alt, rocket_lat, rocket_long, rocket_alt, time):
         # Initialize time
-        self.prev_time = 0
+        self.prev_time = time
 
         # Input turret's GPS position (degrees)
         self.turret_x, self.turret_y, self.turret_z = Controller.GPS_to_ECEF(turret_lat, turret_long, turret_alt)
+
+        # Get relative coordinates by converting to ECEF and subtracting the turret's position
+        rocket_x, rocket_y, rocket_z = Controller.GPS_to_ECEF(rocket_lat, rocket_long, rocket_alt)
+        relative_x = rocket_x - self.turret_x     # Relative x coord of rocket to turret
+        relative_y = rocket_y - self.turret_y     # Relative y coord of rocket to turret
+        relative_z = rocket_z - self.turret_z     # Relative z coord of rocket to turret
+
+        # Initialize turrent angles
+        self.turret_yaw = math.atan2(relative_y, relative_x)
+        self.turret_pitch = math.atan2(relative_z, math.sqrt(relative_x**2 + relative_y**2))
+
+        self.relative_yaw = 0
+        self.relative_pitch = 0
 
         # Initialize PID controller for yaw
         Kp_yaw = 1; Ki_yaw = 1; Kd_yaw = 1
@@ -34,16 +47,13 @@ class Controller:
         self.pitch_pid = PID(Kp_pitch, Ki_pitch, Kd_pitch)
 
         # Initialize motor step size (degrees) and time between steps (s)
-        self.yaw_step_size = 1
-        self.yaw_step_time = 1
-        self.pitch_step_size = 1
-        self.pitch_step_time = 1
+        self.step_size = 1.8
+        self.step_time = 1
 
         # Convert degrees to radians
-        self.yaw_step_size *= math.pi/180
-        self.pitch_step_size *= math.pi/180
+        self.step_size *= math.pi/180
         
-    def controller(self, rocket_lat, rocket_long, rocket_alt, current_yaw, current_pitch, time):
+    def controller(self, rocket_lat, rocket_long, rocket_alt, time):
         # Input rocket's GPS position (degrees), current yaw of turret (degrees), curret pitch of turret (degrees)
 
         # Get relative coordinates by converting to ECEF and subtracting the turret's position
@@ -51,33 +61,36 @@ class Controller:
         relative_x = rocket_x - self.turret_x     # Relative x coord of rocket to turret
         relative_y = rocket_y - self.turret_y     # Relative y coord of rocket to turret
         relative_z = rocket_z - self.turret_z     # Relative z coord of rocket to turret
-        
-        # Convert to radians
-        current_yaw *= math.pi/180
-        current_pitch *= math.pi/180
 
         # Calculate target angles
         target_yaw = math.atan2(relative_y, relative_x)
         target_pitch = math.atan2(relative_z, math.sqrt(relative_x**2 + relative_y**2))
 
         # Calculate angle errors
-        yaw_error = target_yaw - current_yaw
-        pitch_error = target_pitch - current_pitch
+        yaw_error = target_yaw - self.turret_yaw
+        pitch_error = target_pitch - self.turret_pitch
 
         # Calculate dt
         dt = time - self.prev_time
         self.prev_time = time
 
         # Calculate control values
-        yaw_steps = self.yaw_pid.compute(yaw_error, self.yaw_step_size, dt)
-        pitch_steps = self.pitch_pid.compute(pitch_error, self.pitch_step_size, dt)
+        yaw_steps = self.yaw_pid.compute(yaw_error, self.step_size, dt)
+        pitch_steps = self.pitch_pid.compute(pitch_error, self.step_size, dt)
 
-        # Convert to motor input
-        self.motor_input(yaw_steps, pitch_steps)
+        # Update current angles
+        self.update_turret_angles(yaw_steps, pitch_steps)
 
-    def motor_input(self, yaw_steps, pitch_steps):
-        # Take in number of steps and excute those steps
-        pass
+        return (target_yaw - self.turret_yaw, target_pitch - self.turret_pitch)
+
+    def update_turret_angles(self, yaw_steps, pitch_steps):
+        self.turret_yaw += yaw_steps * self.step_size
+        self.relative_yaw += yaw_steps * self.step_size
+        self.turret_pitch += pitch_steps * self.step_size
+        self.relative_pitch += pitch_steps * self.step_size
+        if(self.relative_yaw > 160*math.pi/180 & self.relative_yaw < 200*math.pi/180 & self.relative_pitch < 15*math.pi/180):
+            self.turret_pitch = 15*math.pi/180
+            self.relative_pitch = 15*math.pi/180
 
     @staticmethod
     def GPS_to_ECEF(lat, long, alt): 
