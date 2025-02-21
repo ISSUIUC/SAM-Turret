@@ -31,7 +31,7 @@ class Controller:
         relative_y = rocket_y - self.turret_y     # Relative y coord of rocket to turret
         relative_z = rocket_z - self.turret_z     # Relative z coord of rocket to turret
 
-        # Initialize turrent angles
+        # Initialize turret angles
         self.turret_yaw = math.atan2(relative_y, relative_x)
         self.turret_pitch = math.atan2(relative_z, math.sqrt(relative_x**2 + relative_y**2))
 
