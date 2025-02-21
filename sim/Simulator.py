@@ -1,3 +1,6 @@
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pandas as pd
 import matplotlib.pyplot as plt
 import Sammy
@@ -113,12 +116,12 @@ plt.show()
 
 '''
 
-control = Controller(turret_lat, turret_lon, 0, df_clean["gps.latitude"][0], df_clean["gps.longitude"][0], df_clean["gps.altitudcleane"][0], df_clean["gps.timpsta_cleanmp"][0])
+control = Controller(turret_lat, turret_lon, 0, df_lat[0], df_lon[0], df_alt[0], df_time[0])
 
 for i, row in df.iterrows:
-    yaw, pitch = control.controller(df_clean["gps.latitude"][i], df_clean["gps.longitude"][i], df_clean["gps.altitude"][i], df_clean["gps.timpstamp"][i])
-    df_clean['Yaw_Error'] = yaw
-    df_clean['Pitch_Error_clean'] = pitch
+    yaw, pitch = control.controller(df_lat[i], df_lon[i], df_alt[i], df_time[i])
+    df['Yaw_Error'] = yaw
+    df['Pitch_Error'] = pitch
 
 df_sample = df.iloc[::100]
 
