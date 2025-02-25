@@ -33,17 +33,17 @@ class Controller:
             self.controllers[0].control(self.error[0], self.motors[0], dt),
             self.controllers[1].control(self.error[1], self.motors[1], dt)
         ])
-        self.ang_turr[0] += self.control_output[0]
-        self.ang_turr[1] += self.control_output[1]
+        self.ang_turr[0] += self.control_output[0] * self.motors[0].step_size
+        self.ang_turr[1] += self.control_output[1] * self.motors[1].step_size
         if(self.ang_turr[1] > self.motors[1].deadzone[0] and self.ang_turr[1] < self.motors[1].deadzone[1]):
             if(self.ang_turr[0] > self.motors[0].deadzone[0] and self.ang_turr[0] < self.motors[0].deadzone[1]):
                 steps = int(np.ceil(self.motors[0].deadzone[1] - self.ang_turr[0]))
-                self.ang_turr[0] += steps
                 self.control_output[0] += steps
+                self.ang_turr[0] += steps * self.motors[1].step_size
             else:
                 pass
         else:
-            self.ang_turr[0] += self.control_output[0]
+            self.ang_turr[0] += self.control_output[0] * self.motors[1].step_size
 
     """
     @brief: Converts GPS coordinates to ECEF coordinates
