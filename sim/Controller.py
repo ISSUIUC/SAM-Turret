@@ -1,47 +1,80 @@
 import numpy as np
 
-class Controller:
+class Controller():
+    def __init__(self, pos_turr:list, pos_rocket:list, motor1, motor2, controller1, controller2):
+        pass
+    def update(self, pos_rocket:list, time):
+        pass
+
+class Turret_Controller(Controller):
     """
     This class is the controller for Sammy :)
     """
     def __init__(self, pos_turr:list, pos_rocket:list, motor1, motor2, controller1, controller2):
+        self.pos_turr = pos_turr
         self.pos_ECEF = Controller.GPS_to_ECEF(pos_turr)
         self.pos_rocket_ECEF = Controller.GPS_to_ECEF(pos_rocket)
         self.pos_rocket_rel = self.pos_rocket_ECEF - self.pos_ECEF
+        self.pos_rocket_local = self.ECEF_to_local(self.pos_turr, self.pos_rocket_rel)
         self.motors = [motor1, motor2] # pitch is motor1, yaw is motor2
         self.controllers = [controller1, controller2] # pitch is controller1, yaw is controller2
-        pitch = np.atan2(self.pos_rocket_rel[2], np.sqrt(self.pos_rocket_rel[0]**2 + self.pos_rocket_rel[1]**2))
-        yaw = np.atan2(self.pos_rocket_rel[1], self.pos_rocket_rel[0])
+        pitch = np.atan2(self.pos_rocket_local[2], np.sqrt(self.pos_rocket_local[0]**2 + self.pos_rocket_local[1]**2))
+        yaw = np.atan2(self.pos_rocket_local[1], self.pos_rocket_local[0])
         if(yaw < 0):
             yaw += 2 * np.pi
         self.ang_init = np.array([pitch, yaw])
         self.ang_turr = np.zeros(2) # pitch is ang_rel[0], yaw is ang_rel[1]
         self.prev_time = 0
 
+    @staticmethod
+    def ECEF_to_local(pos_turr, ecef_vector):
+        """ Convert ECEF vector to local ENU (East, North, Up) frame """
+        lat, long, altitude = pos_turr
+
+        # Rotation matrix from ECEF to ENU
+        to_3D = lambda theta, phi : [np.cos(theta) * np.cos(phi), np.sin(theta) * np.cos(phi), np.sin(phi)]
+
+        # create a rectangular orthogonal basis with +z on the vertical axis of turret. 
+        # absolute direction of +x and +y don't matter
+        R = np.array([to_3D(long, lat - np.pi / 2),
+        to_3D(long - np.pi / 2, lat - np.pi / 2),
+        to_3D(long, lat)
+        ]).T
+        # transpose to make defition easier
+        # inverse to get earth -> turret change of basis matrix
+        return np.linalg.inv(R) @ ecef_vector  # Transform vector
+
     def update(self, pos_rocket:list, time):
+        # angle calcs
         self.pos_rocket_ECEF = Controller.GPS_to_ECEF(pos_rocket)
         self.pos_rocket_rel = self.pos_rocket_ECEF - self.pos_ECEF
-        pitch = np.atan2(self.pos_rocket_rel[2], np.sqrt(self.pos_rocket_rel[0]**2 + self.pos_rocket_rel[1]**2))
-        yaw = np.atan2(self.pos_rocket_rel[1], self.pos_rocket_rel[0])
+        self.pos_rocket_local = self.ECEF_to_local(self.pos_turr, self.pos_rocket_rel)
+        pitch = np.atan2(self.pos_rocket_local[2], np.sqrt(self.pos_rocket_local[0]**2 + self.pos_rocket_local[1]**2))
+        yaw = np.atan2(self.pos_rocket_local[1], self.pos_rocket_local[0])
         if(yaw < 0):
             yaw += 2 * np.pi
         self.ang_k = np.array([pitch, yaw]) - self.ang_init
         self.error = self.ang_k - self.ang_turr
+        # update dt
         dt = time - self.prev_time
         self.prev_time = time
+        # control output
         self.control_output = np.array([
             self.controllers[0].control(self.error[0], self.motors[0], dt),
             self.controllers[1].control(self.error[1], self.motors[1], dt)
         ])
+        # deadzone control
         self.ang_turr[0] += self.control_output[0] * self.motors[0].step_size
         self.ang_turr[1] += self.control_output[1] * self.motors[1].step_size
+        if(self.ang_turr[0] < 0):
+            steps = int(np.ceil(0 - self.ang_turr[0]))
+            self.control_output[0] += steps
+            self.ang_turr[0] += steps * self.motors[1].step_size
         if(self.ang_turr[1] > self.motors[1].deadzone[0] and self.ang_turr[1] < self.motors[1].deadzone[1]):
             if(self.ang_turr[0] > self.motors[0].deadzone[0] and self.ang_turr[0] < self.motors[0].deadzone[1]):
                 steps = int(np.ceil(self.motors[0].deadzone[1] - self.ang_turr[0]))
                 self.control_output[0] += steps
                 self.ang_turr[0] += steps * self.motors[1].step_size
-            else:
-                pass
         else:
             self.ang_turr[0] += self.control_output[0] * self.motors[1].step_size
 
@@ -80,12 +113,12 @@ class PID():
         derivative = (error - self.prev_error)/dt
         PID_calc = self.Kp * error + self.Ki * self.integral + self.Kd * derivative
         self.prev_error = error
-        return round(PID_calc * np.radians(motor.step_size))
+        return round(PID_calc / motor.step_size)
 
 
 
 
-
+'''
 class Controller:
     def __init__(self, turret_lat, turret_long, turret_alt, rocket_lat, rocket_long, rocket_alt, time):
         # Initialize time
@@ -178,3 +211,4 @@ class Controller:
         y = (N + alt) * np.cos(lat) * np.sin(long)
         z = ((1 - e2) * N + alt) * np.sin(lat)
         return x, y, z
+'''
