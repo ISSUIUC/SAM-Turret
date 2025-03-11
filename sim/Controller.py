@@ -37,7 +37,7 @@ class Turret_Controller(Controller):
         # create a rectangular orthogonal basis with +z on the vertical axis of turret. 
         # absolute direction of +x and +y don't matter
         R = np.array([to_3D(long, lat - np.pi / 2),
-        to_3D(long - np.pi / 2, lat - np.pi / 2),
+        to_3D(long + np.pi / 2, lat - np.pi / 2),
         to_3D(long, lat)
         ]).T
         # transpose to make defition easier
