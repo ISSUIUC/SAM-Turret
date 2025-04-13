@@ -7,4 +7,6 @@ use past flight data to verify the behavior of the controller.
 
 The `src` folder contains all the ground software that runs on the turret during flight.
 
+data.csv is data.csv from Stargazer 1.3, MIDAS (Sustainer)
+
 motor: https://www.omc-stepperonline.com/nema-23-bipolar-1-8deg-1-9nm-269oz-in-2-8a-3-2v-57x57x76mm-4-wires-23hs30-2804s

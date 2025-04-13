@@ -1,15 +1,16 @@
 motor_1_specifications: # pitch
   step_size: 1.8
   actuation_time: 1
-  dead_zone: [0, 15]
+
 motor_2_specifications: # yaw
   step_size: 1.8
   actuation_time: 1
-  dead_zone: [160, 200]
+
 K_list_1:
   Kp: 1
   Ki: 1
   Kd: 1
+
 K_list_2:
   Kp: 1
   Ki: 1
@@ -17,11 +18,12 @@ K_list_2:
 
 # specify latitude and longitude of launch site
 turret_position:
-  latitude: 40.1020
-  longitude: -88.2272
+  latitude: 42.3809774
+  longitude: -88.0901285
   altitude: 0
 
+# From the first line of the untrimmed csv
 rocket_position:
-  latitude: 40.109257
-  longitude: -88.228511
-  altitude: 0
+  latitude: 42.3758774
+  longitude: -88.0969285
+  altitude: 1600

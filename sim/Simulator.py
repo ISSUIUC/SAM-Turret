@@ -1,5 +1,5 @@
 import pandas as pd
-import matplotlib as mpl
+import matplotlib.pyplot as plt
 import Sammy
 import Motor
 import yaml
@@ -15,16 +15,14 @@ parsed_data = load_yaml(file_path)
 motor_1_specifications = parsed_data['motor_1_specifications']
 step_size_1 = motor_1_specifications['step_size']
 actuation_time_1 = motor_1_specifications['actuation_time']
-dead_zone_1 = motor_1_specifications['dead_zone']
 
-motor_1 = Motor.Motor(step_size_1, actuation_time_1, dead_zone_1) # pitch
+motor_1 = Motor.Motor(step_size_1, actuation_time_1) # pitch
 
 motor_2_specifications = parsed_data['motor_2_specifications']
 step_size_2 = motor_2_specifications['step_size']
 actuation_time_2 = motor_2_specifications['actuation_time']
-dead_zone_2 = motor_2_specifications['dead_zone']
 
-motor_2 = Motor.Motor(step_size_2, actuation_time_2, dead_zone_2) # yaw
+motor_2 = Motor.Motor(step_size_2, actuation_time_2) # yaw
 
 K_list_1 = parsed_data['K_list_1']
 Kp_1 = K_list_1['Kp']
@@ -55,12 +53,6 @@ pos_rocket = [turret_latitude, turret_longitude, turret_altitude]
 Sammy = Sammy.Sammy(pos_turr, pos_rocket, motor_1, motor_2, controller_1, controller_2)
 
 df_clean = pd.read_csv("data_clean.csv")   # read from cleaned (smaller) file
-# print(df_clean.dtypes)
-
-# df_lat = df[df["gps.latitude"]]
-# df_lon = df[df["gps.longitude"]]
-# df_alt = df[df["gps.altitude"]]
-# df_time = df[df["timestamp"]]
 
 df_output = pd.DataFrame(columns = ['pitch_actual', 'yaw_actual', 
                                     'pitch_desired', 'yaw_desired', 
@@ -68,10 +60,10 @@ df_output = pd.DataFrame(columns = ['pitch_actual', 'yaw_actual',
 
 for i in range(len(df_clean)): 
     row = df_clean.loc[i]
+    time = row['timestamp']
     lat = row['gps.latitude']
     long = row['gps.longitude']
     alt = row['gps.altitude']
-    time = row['timestamp']
     [[pitch_actual, yaw_actual], 
      [pitch_desired, yaw_desired], 
      [motor_1_step_increment, motor_2_step_increment]
@@ -82,6 +74,42 @@ for i in range(len(df_clean)):
     df_output.loc[i] = new_row
 
 df_output.to_csv('output.csv', index=False)
+
+df_data = pd.read_csv("data.csv")
+
+# Plot launch altitude
+plt.figure(figsize=(10,4))
+plt.plot(df_clean['timestamp'], df_clean['gps.altitude'], label='Altitude')
+plt.title('Altitude vs Timestamp')
+plt.xlabel('Timestamp')
+plt.ylabel('Altitude (m)')
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+
+# Plot pitch_actual and pitch_desired
+plt.figure(figsize=(10, 4))
+plt.plot(df_output['pitch_actual'], label='Pitch Actual')
+plt.plot(df_output['pitch_desired'], label='Pitch Desired')
+plt.title('Pitch: Actual vs Desired')
+plt.xlabel('Index')
+plt.ylabel('Pitch (deg)')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+
+# Plot yaw_actual and yaw_desired
+plt.figure(figsize=(10, 4))
+plt.plot(df_output['yaw_actual'], label='Yaw Actual')
+plt.plot(df_output['yaw_desired'], label='Yaw Desired')
+plt.title('Yaw: Actual vs Desired')
+plt.xlabel('Index')
+plt.ylabel('Yaw (deg)')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
 
 '''
 
