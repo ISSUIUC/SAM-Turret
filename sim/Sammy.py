@@ -1,5 +1,8 @@
 import numpy as np
 
+a = 6378137.0                               # Semi-major axis of Earth in meters
+b = 6356752.3142                            # Semi_minor axis of Earth in meters
+
 class Controller():
     def __init__(self):
         pass
@@ -45,7 +48,7 @@ class Sammy():
 
         # if no change in time, then don't calculate controls
         # probably can get away with it since our step size is 1.8 degrees
-        if(time == self.prev_time):
+        if (time == self.prev_time):
             ang_turr_deg = np.degrees(self.ang_turr)
             ang_k_deg = np.degrees(self.ang_k)
             return ang_turr_deg, ang_k_deg, np.zeros(2)
@@ -99,8 +102,6 @@ class Sammy():
         lat = np.radians(lat)
         long = np.radians(long)
 
-        a = 6378137.0                               # Semi-major axis of Earth in meters
-        b = 6356752.3142                            # Semi_minor axis of Earth in meters
         e2 = (a**2 - b**2) / a**2                   # Eccentricity squared
         N = a/np.sqrt(1 - e2 * np.sin(lat)**2)      # Prime vertical radius of curvature
         
