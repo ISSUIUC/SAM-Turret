@@ -1,4 +1,5 @@
 import numpy as np
+from time import sleep
 
 class Controller():
     def __init__(self):
@@ -60,6 +61,7 @@ class Sammy():
             self.controllers[1].compute(self.error[1], self.motors[1], dt)
         ])
 
+        # stop oscillations
         if (np.abs(self.error[0]) < self.motors[0].step_size and np.abs(self.error[1]) < self.motors[1].step_size):
             ang_turr_deg = np.degrees(self.ang_turr)
             ang_k_deg = np.degrees(self.ang_k)
@@ -67,13 +69,19 @@ class Sammy():
             return ang_turr_deg, ang_k_deg, control_output_deg
         
         self.ang_turr[0] += self.control_output[0] * self.motors[0].step_size
-        self.ang_turr[1] += self.control_output[1] * self.motors[1].step_size
 
         # make sure pitch isn't below 0 degrees
         if(self.ang_turr[0] < 0):
             steps = int(np.ceil(-self.ang_turr[0] / self.motors[0].step_size))
             self.control_output[0] += steps
             self.ang_turr[0] += steps * self.motors[0].step_size
+            if (np.abs(self.error[1]) < self.motors[1].step_size):
+                ang_turr_deg = np.degrees(self.ang_turr)
+                ang_k_deg = np.degrees(self.ang_k)
+                control_output_deg = np.degrees(self.control_output)
+                return ang_turr_deg, ang_k_deg, control_output_deg
+        
+        self.ang_turr[1] += self.control_output[1] * self.motors[1].step_size
         
         ang_turr_deg = np.degrees(self.ang_turr)
         ang_k_deg = np.degrees(self.ang_k)
@@ -128,7 +136,7 @@ class Sammy():
         u = np.array([np.cos(lat) * np.cos(lon), np.cos(lat) * np.sin(lon), np.sin(lat)])       # Up unit vector
         
         # Build the transformation matrix R from ECEF to ENU
-        R = np.array([e, n, u]).T
+        R = np.array([e, n, u])
         
         # Subtract turret's position from rocket's position in ECEF
         ECEF_relative = ECEF_vector - pos_turr_ECEF

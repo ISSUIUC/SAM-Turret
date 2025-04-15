@@ -8,13 +8,13 @@ motor_2_specifications: # yaw
 
 K_list_1:
   Kp: 1
-  Ki: 1
-  Kd: 1
+  Ki: .1
+  Kd: .1
 
 K_list_2:
   Kp: 1
-  Ki: 1
-  Kd: 1
+  Ki: .1
+  Kd: .1
 
 # specify latitude and longitude of launch site
 turret_position:
@@ -22,8 +22,8 @@ turret_position:
   longitude: -88.0901285
   altitude: 0
 
-# From the first line of the untrimmed csv
+# From the first line of data_clean
 rocket_position:
-  latitude: 42.3758774
-  longitude: -88.0969285
-  altitude: 1600
+  latitude: 42.3762741
+  longitude: -88.0944745
+  altitude: 0 #1651.07

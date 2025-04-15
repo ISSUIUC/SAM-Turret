@@ -51,7 +51,7 @@ rocket_position = parsed_data['rocket_position']
 rocket_latitude = rocket_position['latitude']
 rocket_longitude = rocket_position['longitude']
 rocket_altitude = rocket_position['altitude']
-pos_rocket = [turret_latitude, turret_longitude, turret_altitude]
+pos_rocket = [rocket_latitude, rocket_longitude, rocket_altitude]
 
 Sammy = Sammy.Sammy(pos_turr, pos_rocket, motor_1, motor_2, controller_1, controller_2)
 
