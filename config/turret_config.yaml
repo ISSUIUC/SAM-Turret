@@ -7,14 +7,14 @@ motor_2_specifications: # yaw
   actuation_time: 1
 
 K_list_1:
-  Kp: 1
-  Ki: .1
-  Kd: .1
+  Kp: 0.1
+  Ki: 0.1
+  Kd: 0.1
 
 K_list_2:
-  Kp: 1
-  Ki: .1
-  Kd: .1
+  Kp: 0.1
+  Ki: 0.1
+  Kd: 0.1
 
 # specify latitude and longitude of launch site
 turret_position:
