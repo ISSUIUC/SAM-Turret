@@ -1,20 +1,22 @@
-motor_1_specifications: # pitch
+motor_specs_pitch:
   step_size: 1.8
+  gear_ratio: 0.242424242424
   actuation_time: 1
 
-motor_2_specifications: # yaw
+motor_specs_yaw:
   step_size: 1.8
+  gear_ratio: 0.214285714286
   actuation_time: 1
 
-K_list_1:
-  Kp: 0.1
-  Ki: 0.1
-  Kd: 0.1
+K_list_pitch:
+  Kp: 1
+  Ki: 0.0
+  Kd: 0.0
 
-K_list_2:
-  Kp: 0.1
-  Ki: 0.1
-  Kd: 0.1
+K_list_yaw:
+  Kp: 1
+  Ki: 0.0
+  Kd: 0.0
 
 # specify latitude and longitude of launch site
 turret_position:

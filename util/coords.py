@@ -1,4 +1,7 @@
 import numpy as np
+
+a = 6378137.0                               # Semi-major axis of Earth in meters
+b = 6356752.3142                            # Semi_minor axis of Earth in meters
 """
 Used to normalize angles between -pi and pi
     """
@@ -15,8 +18,6 @@ def GPS_to_ECEF(GPS: list):
     lat = np.radians(lat)
     long = np.radians(long)
 
-    a = 6378137.0                               # Semi-major axis of Earth in meters
-    b = 6356752.3142                            # Semi_minor axis of Earth in meters
     e2 = (a**2 - b**2) / a**2                   # Eccentricity squared
     N = a / np.sqrt(1 - e2 * np.sin(lat)**2)    # Prime vertical radius of curvature
 
@@ -45,7 +46,7 @@ def ECEF_to_ENU(pos_turr_GPS, pos_turr_ECEF, ECEF_vector):
     # Build the transformation matrix R from ECEF to ENU
     R = np.array([e, n, u])
 
-            # Subtract turret's position from rocket's position in ECEF
+    # Subtract turret's position from rocket's position in ECEF
     ECEF_relative = ECEF_vector - pos_turr_ECEF
 
     # Apply the transformation to get ENU coordinates

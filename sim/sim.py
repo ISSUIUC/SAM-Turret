@@ -16,7 +16,7 @@ def load_yaml_config(file_path):
     return data
 
 def initialize_motor(motor_config):
-    return Motor(motor_config['step_size'], motor_config['actuation_time'])
+    return Motor(motor_config['step_size'], motor_config['gear_ratio'], motor_config['actuation_time'])
 
 def initialize_pid_controller(K_list):
     return PID([K_list['Kp'], K_list['Ki'], K_list['Kd']])
@@ -85,12 +85,17 @@ def plot_results(df_clean, df_output):
 
 def main():
     config = load_yaml_config(r"config/turret_config.yaml")
+    if not config:
+        print("Error: Configuration file is empty or not found.")
+        return
+    print("Configuration loaded successfully.")
+    print("Initializing motors and controllers...")
 
-    motor_1 = initialize_motor(config['motor_1_specifications'])
-    motor_2 = initialize_motor(config['motor_2_specifications'])
+    motor_1 = initialize_motor(config['motor_specs_pitch'])
+    motor_2 = initialize_motor(config['motor_specs_yaw'])
 
-    controller_1 = initialize_pid_controller(config['K_list_1'])
-    controller_2 = initialize_pid_controller(config['K_list_2'])
+    controller_1 = initialize_pid_controller(config['K_list_pitch'])
+    controller_2 = initialize_pid_controller(config['K_list_yaw'])
 
     turret_pos = config['turret_position']
     rocket_pos = config['rocket_position']
@@ -98,14 +103,20 @@ def main():
     pos_turret = [turret_pos['latitude'], turret_pos['longitude'], turret_pos['altitude']]
     pos_rocket = [rocket_pos['latitude'], rocket_pos['longitude'], rocket_pos['altitude']]
 
+
     turret_ctrl = Sammy(pos_turret, pos_rocket, motor_1, motor_2, controller_1, controller_2)
 
     df_clean = pd.read_csv(r"data/data_clean.csv")
     
+    print("Data loaded successfully. Processing tracking data...")
     df_output = process_tracking_data(turret_ctrl, df_clean)
 
-    df_output.to_csv('output.csv', index=False)
+    output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'output')
+    os.makedirs(output_dir, exist_ok=True)
+    output_file_path = os.path.join(output_dir, 'output.csv')
+    df_output.to_csv(output_file_path, index=False)
 
+    print("Tracking data processed and saved to output.csv.")
     plot_results(df_clean, df_output)
 
 if __name__ == "__main__":

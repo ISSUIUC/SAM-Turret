@@ -15,4 +15,4 @@ class PID(Controller):
         derivative = (error - self.prev_error) / dt
         PID_calc = self.Kp * error + self.Ki * self.integral + self.Kd * derivative
         self.prev_error = error
-        return round(PID_calc / motor.step_size) # return an integer number of steps
+        return round(PID_calc / (motor.step_size * motor.gear_ratio)) # return an integer number of steps

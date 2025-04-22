@@ -46,7 +46,7 @@ class Sammy():
         self.error = self.ang_k - self.ang_turr
 
         # if no change in time, then don't calculate controls
-        # probably can get away with it since our step size is 1.8 degrees
+        # can get away with it since our step size is 1.8 degrees
         if(time == self.prev_time):
             ang_turr_deg = np.degrees(self.ang_turr)
             ang_k_deg = np.degrees(self.ang_k)
@@ -61,32 +61,24 @@ class Sammy():
             self.controllers[0].compute(self.error[0], self.motors[0], dt),
             self.controllers[1].compute(self.error[1], self.motors[1], dt)
         ])
-
-        # stop oscillations
-        if (np.abs(self.error[0]) < self.motors[0].step_size and np.abs(self.error[1]) < self.motors[1].step_size):
-            ang_turr_deg = np.degrees(self.ang_turr)
-            ang_k_deg = np.degrees(self.ang_k)
-            control_output_deg = np.degrees(self.control_output)
-            return ang_turr_deg, ang_k_deg, control_output_deg
         
-        self.ang_turr[0] += self.control_output[0] * self.motors[0].step_size
+        self.ang_turr[0] += self.control_output[0] * self.motors[0].step_size * self.motors[0].gear_ratio
 
         # make sure pitch isn't below 0 degrees
         if(self.ang_turr[0] < 0):
-            steps = int(np.ceil(-self.ang_turr[0] / self.motors[0].step_size))
+            steps = int(np.ceil(-self.ang_turr[0] / (self.motors[0].step_size * self.motors[0].gear_ratio)))
             self.control_output[0] += steps
-            self.ang_turr[0] += steps * self.motors[0].step_size
-            if (np.abs(self.error[1]) < self.motors[1].step_size):
+            self.ang_turr[0] += steps * self.motors[0].step_size * self.motors[0].gear_ratio
+            if (np.abs(self.error[1]) < self.motors[1].step_size * self.motors[1].gear_ratio):
                 ang_turr_deg = np.degrees(self.ang_turr)
                 ang_k_deg = np.degrees(self.ang_k)
                 control_output_deg = np.degrees(self.control_output)
                 return ang_turr_deg, ang_k_deg, control_output_deg
         
-        self.ang_turr[1] += self.control_output[1] * self.motors[1].step_size
+        self.ang_turr[1] += self.control_output[1] * self.motors[1].step_size * self.motors[1].step_size
         
         ang_turr_deg = np.degrees(self.ang_turr)
         ang_k_deg = np.degrees(self.ang_k)
         control_output_deg = np.degrees(self.control_output)
 
         return ang_turr_deg, ang_k_deg, control_output_deg
-    
