@@ -1,7 +1,7 @@
 # SAM-Turret
 Repository for controls and software necessary for SAM Turret
 
-The repository is split into 2 folders. It contains a `sim` folder that contains Python code that simulate the controller and 
+The archive folder is split into 2 folders. It contains a `sim` folder that contains Python code that simulate the controller and 
 use past flight data to verify the behavior of the controller.
 ###### Before running `simulator.py` you have to locally download previous flight data and name the file `data.csv` and add it to the data directory
 

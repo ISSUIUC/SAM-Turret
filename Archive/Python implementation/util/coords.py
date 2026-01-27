@@ -1,7 +1,7 @@
 import numpy as np
 
 a = 6378137.0                               # Semi-major axis of Earth in meters
-b = 6356752.3142                            # Semi_minor axis of Earth in meters
+b = 6356752.3142                            # Semi-minor axis of Earth in meters
 """
 Used to normalize angles between -pi and pi
     """
