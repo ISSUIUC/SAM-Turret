@@ -8,10 +8,10 @@
 #include "buzzer.h"
 #include "led.h"
 #include "telemetry.h"
-#include "finite-state-machines/fsm.h"
+#include "MIDAS/finite-state-machines/fsm.h"
 #include "b2b_interface.h"
 
-#include "hardware/sensors.h"
+#include "MIDAS/hardware/sensors.h"
 
 /**
  * @struct Sensors

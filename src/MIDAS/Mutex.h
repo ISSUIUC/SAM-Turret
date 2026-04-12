@@ -1,10 +1,6 @@
-#ifdef SILSIM
-#include "silsim/emulation.h"
-#else
 #include <FreeRTOS.h>
 #include <semphr.h>
 #include <task.h>
-#endif
 
 #define MUTEX_TIMEOUT pdMS_TO_TICKS(100)
 

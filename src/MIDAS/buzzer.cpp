@@ -1,5 +1,5 @@
 #include "buzzer.h"
-#include <hardware/pins.h>
+#include <MIDAS/hardware/pins.h>
 
 /**
  * @brief starts playing a new song

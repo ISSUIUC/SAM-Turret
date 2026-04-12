@@ -7,8 +7,8 @@ assert sys.version_info >= (3, 5)
 
 Import("env")
 
-log_format_text = (Path("src") / "log_format.h").read_text()
-sensor_data_text = (Path("src") / "sensor_data.h").read_text(errors="replace")
+log_format_text = (Path("src") / "MIDAS/log_format.h").read_text()
+sensor_data_text = (Path("src") / "MIDAS/sensor_data.h").read_text(errors="replace")
 
 git_command = ["git", "log", "-n", "1", "--pretty=format:%H"]
 git_hash = subprocess.run(git_command, stdout=subprocess.PIPE).stdout.decode('utf-8')
@@ -21,5 +21,5 @@ file = f"""\
 #define LOG_CHECKSUM (0x{checksum:08x})
 """
 
-with Path("src/log_checksum.h").open("w") as checksum_file:
+with Path("src/MIDAS/log_checksum.h").open("w") as checksum_file:
     checksum_file.write(file)

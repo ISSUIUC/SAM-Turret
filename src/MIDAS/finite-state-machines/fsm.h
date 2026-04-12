@@ -4,9 +4,9 @@
 
 #include "FreeRTOSConfig.h"
 #include "fsm_states.h"
-#include "sensor_data.h"
-#include "Buffer.h"
-#include "rocket_state.h"
+#include "MIDAS/sensor_data.h"
+#include "MIDAS/Buffer.h"
+#include "MIDAS/rocket_state.h"
 
 /**
  * @struct StateEstimate

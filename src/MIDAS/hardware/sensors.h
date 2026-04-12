@@ -1,10 +1,10 @@
 #pragma once
 
-#include "errors.h"
-#include "sensor_data.h"
-#include "hardware/pins.h"
+#include "MIDAS/errors.h"
+#include "MIDAS/sensor_data.h"
+#include "MIDAS/hardware/pins.h"
 #include "TCAL9539.h"
-#include "rocket_state.h"
+#include "MIDAS/rocket_state.h"
 
 /**
  * @struct LowG interface

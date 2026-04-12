@@ -2,9 +2,9 @@
 #include <SPI.h>
 #include "TCAL9539.h"
 
-#include "systems.h"
-#include "hardware/pins.h"
-#include "sensor_data.h"
+#include "MIDAS/systems.h"
+#include "MIDAS/hardware/pins.h"
+#include "MIDAS/sensor_data.h"
 #include "pins.h"
 
 /**

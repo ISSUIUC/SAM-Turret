@@ -1,6 +1,6 @@
 #include "led.h"
 #include "TCAL9539.h"
-#include "hardware/pins.h"
+#include "MIDAS/hardware/pins.h"
 
 /**
  * @struct GpioAddress

@@ -5,7 +5,7 @@
 #include "errors.h"
 #include "led.h"
 
-#include "hardware/telemetry_backend.h"
+#include "MIDAS/hardware/telemetry_backend.h"
 
 /**
  * @class Telemetry

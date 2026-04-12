@@ -4,7 +4,7 @@
 
 #include "pins.h"
 #include "sensors.h"
-#include "sensor_data.h"
+#include "MIDAS/sensor_data.h"
 
 SFE_UBLOX_GNSS ublox;
 

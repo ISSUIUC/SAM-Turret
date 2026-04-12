@@ -16,8 +16,8 @@
  * Magilan Sendhil
  */
 
-#include "hardware/telemetry_backend.h"
-#include "hardware/pins.h"
+#include "MIDAS/hardware/telemetry_backend.h"
+#include "MIDAS/hardware/pins.h"
 
 // Change to 434.0 or other frequency, must match RX's freq!
 #ifdef IS_BOOSTER

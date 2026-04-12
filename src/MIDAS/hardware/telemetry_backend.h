@@ -1,7 +1,7 @@
 #pragma once
 
-#include "errors.h"
-#include "hal.h"
+#include "MIDAS/errors.h"
+#include "MIDAS/hal.h"
 #include "pins.h"
 #include <TCAL9539.h>
 
