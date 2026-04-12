@@ -4,7 +4,7 @@
 #include <SPI.h>
 #include <cmath>
 #include <array>
-#include <Wifi.h>
+#include <WiFi.h>
 #include <esp_now.h>
 
 #define SPI_SCK 3
