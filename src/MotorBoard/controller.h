@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cstdint>
-#include <TMC2209.h>
+#include<cstdint>
+#include<TMC2209.h>
 
 class MotorController {
 public:
@@ -18,6 +18,9 @@ public:
         digitalWrite(step_pin, HIGH);
         digitalWrite(step_pin, LOW);
     }
+    
+    //another function to get current position and goal position
+    // void dobigthing() {
 
     // }
     // //the moving part
@@ -31,6 +34,7 @@ public:
     //     }
     // }
     
+
     void set_dir(bool dir) {
         digitalWrite(dir_pin, dir ? LOW : HIGH);
         current_dir = dir;

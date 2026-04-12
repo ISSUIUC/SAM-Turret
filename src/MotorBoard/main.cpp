@@ -1,12 +1,11 @@
 #include <Arduino.h>
-// #include <TMCStepper.h>
+//#include <TMCStepper.h>
 #include <TMCDriver.h>
 #include <SPI.h>
 #include <cmath>
 #include <array>
 #include <Wifi.h>
 #include <esp_now.h>
-#include "include/conversion.h"
 
 #define SPI_SCK 3
 #define SPI_MOSI 2
@@ -25,17 +24,17 @@
 #define LED1 8
 #define BOOT 0
 
-struct GpsData { 
-    float sammy_lat;
-    float sammy_lon;
-    float sammy_alt;
-    float sammy_pitch;
-    float sammy_yaw;
-    float rocket_lat;
-    float rocket_lon; 
-    float rocket_alt;
-    int control_mode;
-};
+struct Angles {
+    float azimuth = 0.0;
+    float elevation = 0.0;
+} angles;
+
+void update_position();
+
+TMC2660 driver(CS_0, SG_0);
+
+bool sdoff = false;
+uint8_t log_counter = 0;
 
 struct {
     std::array<int,2> real_position{};
@@ -50,78 +49,23 @@ struct {
     int microsteps = 32;
 } motor_config;
 
-GpsData gps;
-
-TMC2660 driver(CS_0, SG_0);
-
-bool sdoff = false;
-uint8_t log_counter = 0;
-
-void update_position(
-    double goal_lat, double goal_lon, double goal_alt,
-    double curr_lat, double curr_lon, double curr_alt, 
-    double curr_pitch, double curr_yaw, 
-    int mode
-) {
-    // current is turret, goal is rockect
-    double curr_x, curr_y, curr_z;
-    double goal_x, goal_y, goal_z;
-
-    gps_to_ecef(curr_lat, curr_lon, curr_alt, curr_x, curr_y, curr_z);
-    gps_to_ecef(goal_lat, goal_lon, goal_alt, goal_x, goal_y, goal_z);
-
-    double east, north, up;
-    ecef_to_enu(
-            goal_x, goal_y, goal_z, 
-            curr_lat, curr_lon, 
-            curr_x, curr_y, curr_z, 
-            east, north, up
-    );
-
-    double goal_pitch, goal_yaw;
-    calculate_pitch_yaw(east, north, up, goal_pitch, goal_yaw);
-
-    if (mode == 0) {
-        goal_pitch = curr_pitch;
-        goal_yaw = curr_yaw;
-    }
-
-    int steps_pitch = motor_config.step_per_rev[0] * motor_config.microsteps * goal_pitch / (2 * M_PI);
-    int steps_yaw  = motor_config.step_per_rev[1] * motor_config.microsteps * goal_yaw / (2 * M_PI);
-
-    if(goal_pitch < 0) steps_pitch = 0;
-    if(goal_pitch > (M_PI / 2)) steps_pitch = motor_config.step_per_rev[0] * motor_config.microsteps * 0.25;
-
-    motor_config.target_position[0] = steps_pitch;
-    motor_config.target_position[1] = steps_yaw;
-}
-
-void on_data_recv(const uint8_t * mac, const uint8_t * incomingData, int len) {
-    if (len != sizeof(GpsData)) {
+void on_data_recv(const uint8_t * mac, const uint8_t *incomingData, int len) {
+    if(len != sizeof(Angles)) {
         Serial.println("Received data of incorrect length");
         return;
     }
 
-    memcpy(&gps, incomingData, len);
-    if ((gps.rocket_lat == 0 || gps.rocket_lon == 0) && gps.control_mode == 1) {
-        return;
-    }
-    
-    update_position(
-        gps.rocket_lat, gps.rocket_lon, gps.rocket_alt,
-        gps.sammy_lat, gps.sammy_lon, gps.sammy_alt, 
-        gps.sammy_pitch, gps.sammy_yaw, 
-        gps.control_mode
-    );
+    memcpy(&angles, incomingData, len);
+    update_position();
 }
 
 void step(int channel, bool dir) {
-    if (channel == 0) {
+    if(channel == 0) {
         digitalWrite(DIR_0, dir);
         digitalWrite(STEP_0, HIGH);
         digitalWrite(STEP_0, LOW);
     }
-    if (channel == 1) {
+    if(channel == 1 ) {
         digitalWrite(DIR_1, dir);
         digitalWrite(STEP_1, HIGH);
         digitalWrite(STEP_1, LOW);
@@ -130,13 +74,13 @@ void step(int channel, bool dir) {
 
 void move_to_position() {
     uint64_t now = micros();
-    if (motor_config.last_update_time == 0) {
+    if(motor_config.last_update_time == 0) {
         motor_config.last_update_time = now;
     }
     float dt = (now - motor_config.last_update_time) / 1000000.0;
     motor_config.last_update_time = now;
 
-    for (int motor = 0; motor < 2; motor++) {
+    for(int motor = 0; motor < 2; motor++) {
         // integration phase
         float& pos = motor_config.ideal_position[motor];
         float target = motor_config.target_position[motor];
@@ -146,7 +90,7 @@ void move_to_position() {
         pos += speed * dt;
 
         // step phase
-        if (pos > motor_config.real_position[motor] + 1) {
+        if(pos > motor_config.real_position[motor] + 1) {
             step(motor, true);
             motor_config.real_position[motor] += 1;
             if (log_counter % 5 == 0) {
@@ -154,10 +98,10 @@ void move_to_position() {
                 Serial.print(' ');
                 Serial.print(speed);
                 Serial.print(' ');
-                Serial.println(dt * 1000000); // s to μs
+                Serial.println(dt * 1000000);
             }
         }
-        if (pos < motor_config.real_position[motor] - 1) {
+        if(pos < motor_config.real_position[motor] - 1) {
             step(motor, false);
             motor_config.real_position[motor] -= 1;
             if (log_counter % 5 == 0) {
@@ -165,16 +109,16 @@ void move_to_position() {
                 Serial.print(' ');
                 Serial.print(speed);
                 Serial.print(' ');
-                Serial.println(dt * 1000000); // s to μs
+                Serial.println(dt * 1000000);
             }
         }
 
         // control phase
         float dir = speed > 0 ? 1 : -1;
         float decel_pos = pos + speed * speed / decel / 2.0 * dir;
-        if ((decel_pos - target) * dir >= 0) {
+        if((decel_pos - target) * dir >= 0) {
             speed -= decel * dt * dir;
-        } else if (abs(speed) < motor_config.max_speed[motor]) {
+        } else if(abs(speed) < motor_config.max_speed[motor]) {
             speed += accel * dt * dir;
         }
     }
@@ -189,6 +133,18 @@ void move_to_position() {
 }
 
 //Below is saved for the communication between midas and the motor board.
+
+void update_position() {
+    int steps_el = motor_config.step_per_rev[0] * motor_config.microsteps * angles.elevation / (2 * M_PI);
+    int steps_az = motor_config.step_per_rev[1] * motor_config.microsteps * angles.azimuth / (2 * M_PI);
+
+    if(angles.elevation < 0) steps_el = 0;
+    if(angles.elevation > (M_PI / 2)) steps_el = motor_config.step_per_rev[0] * motor_config.microsteps * 0.25;
+
+    const double divisor = 4.0;
+    motor_config.target_position[0] = motor_config.real_position[0]+(int)std::round((steps_el - motor_config.real_position[0]) / divisor);
+    motor_config.target_position[1] = motor_config.real_position[1]+(int)std::round((steps_az - motor_config.real_position[1]) / divisor);
+}
 
 void setup() {
     Serial.begin(9600);
@@ -260,6 +216,7 @@ void setup() {
     // Serial.println(WiFi.macAddress());
     // delay(3000);
 }
+
 
 bool validate(const std::string& number) {
     if(number.size() > 8 || number.size() == 0) return false;

@@ -1,4 +1,4 @@
-#include "include/controller.h"
+#include "controller.h"
 
 MotorController::MotorController(uint8_t step_pin, uint8_t dir_pin, TMC2209::SerialAddress addr):
 step_pin(step_pin), dir_pin(dir_pin), addr(addr){}

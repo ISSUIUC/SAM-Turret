@@ -1,4 +1,4 @@
-from sammy import Controller
+from Sammy import Controller
 """
 Klist = [proportional coefficient, integral coefficient, derivative coefficient]
 Number of motor steps increases proportionally to current displacement from desired position, 

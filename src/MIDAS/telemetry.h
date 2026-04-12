@@ -1,0 +1,30 @@
+#pragma once
+
+#include "telemetry_packet.h"
+#include "rocket_state.h"
+#include "errors.h"
+#include "led.h"
+
+#include "hardware/telemetry_backend.h"
+
+/**
+ * @class Telemetry
+ * 
+ * @brief wraps the telemetry system to create and send a packet
+*/
+class Telemetry {
+public:
+    Telemetry() = default;
+    explicit Telemetry(TelemetryBackend&& backend);
+
+    ErrorCode __attribute__((warn_unused_result)) init();
+
+    void transmit(RocketData& rocket_data, LEDController& led);
+    bool receive(TelemetryPacket* packet, int wait_milliseconds);
+    void acknowledgeReceived();
+private:
+    int received_count;
+    TelemetryPacket makePacket(RocketData& data);
+
+    TelemetryBackend backend;
+};

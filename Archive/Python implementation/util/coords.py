@@ -2,23 +2,23 @@ import numpy as np
 
 a = 6378137.0                               # Semi-major axis of Earth in meters
 b = 6356752.3142                            # Semi-minor axis of Earth in meters
+e2 = (a**2 - b**2) / a**2                   # Eccentricity squared
 """
 Used to normalize angles between -pi and pi
-    """
+"""
 def norm_pi(angle):
     return (angle + np.pi) % (2 * np.pi) - np.pi
+
 """
     Converts GPS (latitude (degrees), longitude (degrees), altitude (m)) into ECEF coordinates (+x, +y, +z)
     centered at the center of the Earth, with x at long = 0, y at long = 90 E, z at lat = 90 N
-    """
-
+"""
 def GPS_to_ECEF(GPS: list):
     # Convert to radians
     lat, long, alt = GPS
     lat = np.radians(lat)
     long = np.radians(long)
 
-    e2 = (a**2 - b**2) / a**2                   # Eccentricity squared
     N = a / np.sqrt(1 - e2 * np.sin(lat)**2)    # Prime vertical radius of curvature
 
     x = (N + alt) * np.cos(lat) * np.cos(long)
