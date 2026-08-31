@@ -3,9 +3,6 @@
 
 #include "sammy.h"
 
-#include <TCAL9539.h>
-#include <esp_now.h>
-
 #define ENABLE_TELEM
 
 /**
@@ -40,30 +37,30 @@ DECLARE_THREAD(buzzer, RocketSystems *arg)
 }
 
 /*
- * Thread for sam turret. Takes care of angle calcs and sends desired angles to motor board.
- *
- * Note Kalman is used for Up and GPS is used for East and North in ENU
+ * Thread for the sam turret. 
+ * Calculates the desired angles and sends them to the motor board.
+ * Currently Kalman is used for Up and GPS is used for East and North in ENU.
  */
 DECLARE_THREAD(sammy, RocketSystems *arg)
 {   
-    using namespace Sammy;
-    uint8_t broadcastAddress[] = {0xdc, 0x54, 0x75, 0xca, 0xa0, 0x10};  //DC:54:75:CA:A0:10
+    Sammy::SamState sam{};
     
     while (true)
     {
-        if (Serial.available()) SerialHandling(Serial.read());
+        sam.track(
+            Sammy::GPS::fromMIDAS(arg->rocket_data.sam_gps.getRecent()), 
+            Sammy::GPS::fromMIDAS(arg->rocket_data.rocket_gps.getRecent()), 
+            arg->rocket_data.rocket_kalman.getRecent()
+        );
 
-        // get coords
-        DBLGPS sam_gps = DBLGPS::fromMIDAS(arg->rocket_data.sam_gps.getRecent());
-        DBLGPS rocket_gps = DBLGPS::fromMIDAS(arg->rocket_data.rocket_gps.getRecent());
-        KalmanData rocket_kalman = arg->rocket_data.rocket_kalman.getRecent();
-
-        if (mode == Mode::AUTOMATIC) Tracking(sam_gps, rocket_gps, rocket_kalman);
-
-        // send desired angle
-        esp_err_t result = esp_now_send(broadcastAddress, (uint8_t*)&angles, sizeof(Angles));
-        if (result != ESP_OK)
-            Serial.println("Error sending the data");
+        // send desired angles
+        esp_err_t result = esp_now_send(
+            Sammy::broadcastAddress.data(), 
+            (uint8_t*)sam.currAngles(), 
+            sizeof(Sammy::Angles)
+        );
+        if (result != ESP_OK) 
+            Serial.println("Error sending data");
         THREAD_SLEEP(10);
     }
 }

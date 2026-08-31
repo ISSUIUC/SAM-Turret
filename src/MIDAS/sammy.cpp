@@ -1,80 +1,95 @@
 #include "sammy.h"
 
+using namespace Sammy;
+
 /*
- * Reads serial and updates mode and angles accordingly
+ * Return desired angles for the turret
  */
-void Sammy::SerialHandling(int v) {
+Angles* SamState::currAngles() {
+    return &angles;
+}
+
+/*
+ * Reads the serial input, updating operation mode and angles based on input
+ */
+void SamState::handleSerial() {
+    if (!Serial.available()) 
+        return;
+    int v = Serial.read();
+
     // Switch between manual and automatic based on user input
     if (v == '0') {
         Serial.println("Manual Mode");
-        mode = Mode::MANUAL;
+        automatic = false;
     } else if (v == '1') {
         Serial.println("Automatic Mode");
-        mode = Mode::AUTOMATIC;
+        automatic = true;
     }
+
     // manual mode angling
-    if (mode == Mode::MANUAL) {
+    if (!automatic) {
         if (v == 'w') {
-            angles.elevation += sweep_angle;
+            angles.elevation += manual_adjust;
             if (angles.elevation > M_PI / 2)
                 angles.elevation = M_PI / 2;
         } else if (v == 's') {
-            angles.elevation -= sweep_angle;
+            angles.elevation -= manual_adjust;
             if (angles.elevation < 0)
                 angles.elevation = 0;
         } else if (v == 'd') {
-            angles.azimuth -= sweep_angle;
+            angles.azimuth -= manual_adjust;
             if (angles.azimuth < -M_PI / 2)
                 angles.azimuth = -M_PI / 2;
         } else if (v == 'a') {
-            angles.azimuth += sweep_angle;
+            angles.azimuth += manual_adjust;
             if (angles.azimuth > M_PI / 2)
                 angles.azimuth = M_PI / 2;
         }
     }
 }
+
 /*
- * Tracking logic for the turret
+ * Handles the tracking logic for the turret by updating the Angles struct of SamState.
+ * Sweeps to get a lock if in automatic mode without a lock.
  */
-void Sammy::Tracking(DBLGPS& sam_gps, DBLGPS& rocket_gps, KalmanData& rocket_kalman) {
-    switch (phase) {
-    // sweeps using only azimuth to get a lock on the rocket
-    case TrackingPhase::SWEEP:
-        if (sam_gps.isValid() && rocket_gps.isValid()) {
-            phase = TrackingPhase::LOCK;
-            TurretCalcs(sam_gps);
-            RocketCalcs(rocket_gps, rocket_kalman.position.px);
-        } else {
-            angles.azimuth += sweep_angle;
-            if (angles.azimuth > M_PI / 2) {
-                angles.azimuth = M_PI / 2;
-                sweep_angle *= -1.0f;
-            } else if (angles.azimuth < -M_PI / 2) {
-                angles.azimuth = -M_PI / 2;
-                sweep_angle *= -1.0f;
-            }
-        }
-        break;
-    // calculate angle using turret and rocket coords
-    case TrackingPhase::LOCK:
+void SamState::track(const GPS& sam_gps, const GPS& rocket_gps, const KalmanData& rocket_kalman) {
+    handleSerial();
+
+    if (lock) {
+        // calculate angles using the turret's and rocket's coords
         if (sam_gps.isValid() && rocket_gps.isValid()) {
             // update turret coords if they have changed
             if (
                 std::abs(sam_gps.lat - turret.lat) > GPS_TOL ||
                 std::abs(sam_gps.lon - turret.lon) > GPS_TOL
             ) {
-                TurretCalcs(sam_gps);
+                updateTurretCoords(sam_gps);
             }
-            RocketCalcs(rocket_gps, rocket_kalman.position.px);
+            updateAngles(rocket_gps, rocket_kalman.position.px);
         }
-        break;
+    } else {
+        // sweep using azimuth until a lock is aquired
+        if (sam_gps.isValid() && rocket_gps.isValid()) {
+            lock = true;
+            updateTurretCoords(sam_gps);
+            updateAngles(rocket_gps, rocket_kalman.position.px);
+        } else {
+            angles.azimuth += sweep_adjust;
+            if (angles.azimuth > M_PI / 2) {
+                angles.azimuth = M_PI / 2;
+                sweep_adjust *= -1.0f;
+            } else if (angles.azimuth < -M_PI / 2) {
+                angles.azimuth = -M_PI / 2;
+                sweep_adjust *= -1.0f;
+            }
+        }
     }
 }
 
 /*
- * Updates the turret's coords and fills trig cache for ENU conversion
+ * Updates the turret's coords and fills its cache for ENU conversions
  */
-void Sammy::TurretCalcs(DBLGPS& sam_gps) {
+void SamState::updateTurretCoords(const GPS& sam_gps) {
     // update turret GPS coords
     turret.lat = sam_gps.lat;
     turret.lon = sam_gps.lon;
@@ -94,10 +109,10 @@ void Sammy::TurretCalcs(DBLGPS& sam_gps) {
 }
 
 /*
- * Takes in the rocket's coords, converts GPS -> ECEF -> ENU based on the turret,
- * and updates the Angles struct with the new angles for azimuth and elevation
+ * Calculates and updates the desired angles using the inputted rocket's coords and
+ * the turret's current coords in SamState
  */
-void Sammy::RocketCalcs(DBLGPS& rocket_gps, double rocket_alt) {
+void SamState::updateAngles(const GPS& rocket_gps, double rocket_alt) {
     // rocket trig cache
     double rocket_sin_lat{std::sin(rocket_gps.lat)};
     double rocket_cos_lat{std::cos(rocket_gps.lat)};
