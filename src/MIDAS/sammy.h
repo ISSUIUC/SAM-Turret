@@ -10,7 +10,7 @@ namespace Sammy {
 // Configs
 constexpr double GPS_TOL{5e-5};         // Tolerance for when turret decides to update its coords
 constexpr float manual_adjust{0.05f};   // Controls speed of manual mode
-constexpr float sweep_config{0.025f};   // Control speed of automatic mode's sweep
+inline float sweep_adjust{0.005f};      // Control speed of automatic mode's sweep
 constexpr std::array<uint8_t, 6> broadcastAddress{0xdc, 0x54, 0x75, 0xca, 0xa0, 0x10};  //DC:54:75:CA:A0:10
 
 // WGS84 constants for GPS to ECEF
@@ -28,10 +28,12 @@ struct Angles {
 struct GPS {
     double lat{}, lon{}, alt{};
 
+    // convert to degrees
     static GPS fromMIDAS(const ::GPS& gps) {
         return {gps.latitude * 1.0e-7, gps.longitude * 1.0e-7, gps.altitude};
     }
 
+    // check GPS is not a zero packet
     bool isValid() const {
         return lat != 0.0 || lon != 0.0;
     }
@@ -52,10 +54,10 @@ private:
     Angles angles{};
     bool automatic{false};
     bool lock{false};
-    float sweep_adjust{sweep_config};
 
     // struct for turret coords
     struct {
+        // GPS is stored as radians
         double lat, lon, alt;
 
         // cache for ENU conversion

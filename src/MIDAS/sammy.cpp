@@ -90,9 +90,9 @@ void SamState::track(const GPS& sam_gps, const GPS& rocket_gps, const KalmanData
  * Updates the turret's coords and fills its cache for ENU conversions
  */
 void SamState::updateTurretCoords(const GPS& sam_gps) {
-    // update turret GPS coords
-    turret.lat = sam_gps.lat;
-    turret.lon = sam_gps.lon;
+    // update turret GPS coords and store as radians
+    turret.lat = sam_gps.lat * M_PI / 180.0;
+    turret.lon = sam_gps.lon * M_PI / 180.0;;
     turret.alt = sam_gps.alt;
 
     // turret trig cache
@@ -114,10 +114,10 @@ void SamState::updateTurretCoords(const GPS& sam_gps) {
  */
 void SamState::updateAngles(const GPS& rocket_gps, double rocket_alt) {
     // rocket trig cache
-    double rocket_sin_lat{std::sin(rocket_gps.lat)};
-    double rocket_cos_lat{std::cos(rocket_gps.lat)};
-    double rocket_sin_lon{std::sin(rocket_gps.lon)};
-    double rocket_cos_lon{std::cos(rocket_gps.lon)};
+    double rocket_sin_lat{std::sin(rocket_gps.lat * M_PI / 180.0)};
+    double rocket_cos_lat{std::cos(rocket_gps.lat * M_PI / 180.0)};
+    double rocket_sin_lon{std::sin(rocket_gps.lon * M_PI / 180.0)};
+    double rocket_cos_lon{std::cos(rocket_gps.lon * M_PI / 180.0)};
 
     // conversion to ECEF
     double N{a / std::sqrt(1.0 - e2 * rocket_sin_lat * rocket_sin_lat)};
