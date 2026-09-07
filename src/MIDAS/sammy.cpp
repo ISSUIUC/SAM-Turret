@@ -38,12 +38,12 @@ void SamState::handleSerial() {
                 angles.elevation = 0;
         } else if (v == 'd') {
             angles.azimuth -= manual_adjust;
-            if (angles.azimuth < -M_PI / 2)
-                angles.azimuth = -M_PI / 2;
+            if (angles.azimuth < -M_PI)
+                angles.azimuth = -M_PI;
         } else if (v == 'a') {
             angles.azimuth += manual_adjust;
-            if (angles.azimuth > M_PI / 2)
-                angles.azimuth = M_PI / 2;
+            if (angles.azimuth > M_PI)
+                angles.azimuth = M_PI;
         }
     }
 }
@@ -54,6 +54,8 @@ void SamState::handleSerial() {
  */
 void SamState::track(const GPS& sam_gps, const GPS& rocket_gps, const KalmanData& rocket_kalman) {
     handleSerial();
+    if (!automatic) 
+        return;
 
     if (lock) {
         // calculate angles using the turret's and rocket's coords
@@ -75,11 +77,11 @@ void SamState::track(const GPS& sam_gps, const GPS& rocket_gps, const KalmanData
             updateAngles(rocket_gps, rocket_kalman.position.px);
         } else {
             angles.azimuth += sweep_adjust;
-            if (angles.azimuth > M_PI / 2) {
-                angles.azimuth = M_PI / 2;
+            if (angles.azimuth > M_PI) {
+                angles.azimuth = M_PI;
                 sweep_adjust *= -1.0f;
-            } else if (angles.azimuth < -M_PI / 2) {
-                angles.azimuth = -M_PI / 2;
+            } else if (angles.azimuth < -M_PI) {
+                angles.azimuth = -M_PI;
                 sweep_adjust *= -1.0f;
             }
         }
