@@ -1,6 +1,6 @@
 #include "systems.h"
 #include "hal.h"
-
+#include "WiFi.h"
 #include "sammy.h"
 
 #define ENABLE_TELEM
@@ -44,7 +44,24 @@ DECLARE_THREAD(buzzer, RocketSystems *arg)
 DECLARE_THREAD(sammy, RocketSystems *arg)
 {   
     Sammy::SamState sam{};
+    // Set WiFi mode
+    WiFi.mode(WIFI_STA);
+
+    // Initialize ESP-NOW 
+    if (esp_now_init() != ESP_OK) {
+        Serial.println("Error initializing ESP-NOW");
+    }
+
+    // Register the peer MAC address once
+    esp_now_peer_info_t peerInfo = {};
+    memcpy(peerInfo.peer_addr, Sammy::broadcastAddress.data(), 6);
+    peerInfo.channel = 0;  
+    peerInfo.encrypt = false;
     
+    if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+        Serial.println("Failed to add peer");
+    }
+
     while (true)
     {
         sam.track(
@@ -53,7 +70,6 @@ DECLARE_THREAD(sammy, RocketSystems *arg)
             arg->rocket_data.rocket_kalman.getRecent()
         );
 
-        // send desired angles
         esp_err_t result = esp_now_send(
             Sammy::broadcastAddress.data(), 
             (uint8_t*)sam.currAngles(), 
