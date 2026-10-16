@@ -25,9 +25,9 @@
 #define BOOT 0
 
 struct Angles {
-    float azimuth = 0.0;
-    float elevation = 0.0;
-} angles;
+    float azimuth;
+    float elevation;
+} angles{};
 
 void update_position();
 
