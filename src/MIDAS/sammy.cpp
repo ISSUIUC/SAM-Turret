@@ -62,8 +62,8 @@ void SamState::track(const GPS& sam_gps, const GPS& rocket_gps, const KalmanData
         if (sam_gps.isValid() && rocket_gps.isValid()) {
             // update turret coords if they have changed
             if (
-                std::abs(sam_gps.lat - turret.lat) > GPS_TOL ||
-                std::abs(sam_gps.lon - turret.lon) > GPS_TOL
+                std::abs(sam_gps.lat * DEG2RAD - turret.lat) > GPS_TOL * DEG2RAD ||
+                std::abs(sam_gps.lon * DEG2RAD - turret.lon) > GPS_TOL * DEG2RAD
             ) {
                 updateTurretCoords(sam_gps);
             }
@@ -93,8 +93,8 @@ void SamState::track(const GPS& sam_gps, const GPS& rocket_gps, const KalmanData
  */
 void SamState::updateTurretCoords(const GPS& sam_gps) {
     // update turret GPS coords and store as radians
-    turret.lat = sam_gps.lat * M_PI / 180.0;
-    turret.lon = sam_gps.lon * M_PI / 180.0;;
+    turret.lat = sam_gps.lat * DEG2RAD;
+    turret.lon = sam_gps.lon * DEG2RAD;
     turret.alt = sam_gps.alt;
 
     // turret trig cache
@@ -116,10 +116,10 @@ void SamState::updateTurretCoords(const GPS& sam_gps) {
  */
 void SamState::updateAngles(const GPS& rocket_gps, double rocket_alt) {
     // rocket trig cache
-    double rocket_sin_lat{std::sin(rocket_gps.lat * M_PI / 180.0)};
-    double rocket_cos_lat{std::cos(rocket_gps.lat * M_PI / 180.0)};
-    double rocket_sin_lon{std::sin(rocket_gps.lon * M_PI / 180.0)};
-    double rocket_cos_lon{std::cos(rocket_gps.lon * M_PI / 180.0)};
+    double rocket_sin_lat{std::sin(rocket_gps.lat * DEG2RAD)};
+    double rocket_cos_lat{std::cos(rocket_gps.lat * DEG2RAD)};
+    double rocket_sin_lon{std::sin(rocket_gps.lon * DEG2RAD)};
+    double rocket_cos_lon{std::cos(rocket_gps.lon * DEG2RAD)};
 
     // conversion to ECEF
     double N{a / std::sqrt(1.0 - e2 * rocket_sin_lat * rocket_sin_lat)};
@@ -142,7 +142,7 @@ void SamState::updateAngles(const GPS& rocket_gps, double rocket_alt) {
                     + turret.sin_lat * dz;
 
     // calculates angles and updates the Angles struct
-    angles.azimuth = std::atan2(east, north);
+    angles.azimuth = -std::atan2(east, north);
     angles.elevation = std::atan2(up, std::sqrt(east * east + north * north));
     if (angles.elevation < 0.0) angles.elevation = 0.0; // elevation gaurd
 }

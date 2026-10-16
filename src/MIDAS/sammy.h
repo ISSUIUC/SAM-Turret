@@ -9,6 +9,7 @@
 namespace Sammy {
 // Configs
 constexpr double GPS_TOL{5e-5};         // Tolerance for when turret decides to update its coords
+constexpr double DEG2RAD = M_PI / 180;  // Convert from degrees to radians
 constexpr float manual_adjust{0.05f};   // Controls speed of manual mode
 inline float sweep_adjust{0.005f};      // Control speed of automatic mode's sweep
 constexpr std::array<uint8_t, 6> broadcastAddress{0xdc, 0x54, 0x75, 0xca, 0xa0, 0x10};  //DC:54:75:CA:A0:10
