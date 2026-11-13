@@ -1,2 +1,4 @@
 .pio
 .vscode
+SAM-SILSIM/data/*.csv
+SAM-SILSIM/output/*.csv

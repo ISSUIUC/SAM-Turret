@@ -29,6 +29,7 @@ void SamState::handleSerial() {
     // manual mode angling
     if (!automatic) {
         if (v == 'w') {
+
             angles.elevation += manual_adjust;
             if (angles.elevation > M_PI / 2)
                 angles.elevation = M_PI / 2;
@@ -45,6 +46,7 @@ void SamState::handleSerial() {
             if (angles.azimuth > M_PI)
                 angles.azimuth = M_PI;
         }
+    Serial.println(angles.azimuth); 
     }
 }
 
@@ -59,7 +61,9 @@ void SamState::track(const GPS& sam_gps, const GPS& rocket_gps, const KalmanData
 
     if (lock) {
         // calculate angles using the turret's and rocket's coords
+ 
         if (sam_gps.isValid() && rocket_gps.isValid()) {
+            Serial.printf("Lock found!"); 
             // update turret coords if they have changed
             if (
                 std::abs(sam_gps.lat * DEG2RAD - turret.lat) > GPS_TOL * DEG2RAD ||
@@ -76,14 +80,15 @@ void SamState::track(const GPS& sam_gps, const GPS& rocket_gps, const KalmanData
             updateTurretCoords(sam_gps);
             updateAngles(rocket_gps, rocket_kalman.position.px);
         } else {
-            angles.azimuth += sweep_adjust;
-            if (angles.azimuth > M_PI) {
-                angles.azimuth = M_PI;
-                sweep_adjust *= -1.0f;
-            } else if (angles.azimuth < -M_PI) {
-                angles.azimuth = -M_PI;
-                sweep_adjust *= -1.0f;
-            }
+            angles.azimuth = angles.azimuth;
+            // angles.azimuth += sweep_adjust;
+            // if (angles.azimuth > M_PI) {
+            //     angles.azimuth = M_PI;
+            //     sweep_adjust *= -1.0f;
+            // } else if (angles.azimuth < -M_PI) {
+            //     angles.azimuth = -M_PI;
+            //     sweep_adjust *= -1.0f;
+            // }
         }
     }
 }
@@ -116,6 +121,7 @@ void SamState::updateTurretCoords(const GPS& sam_gps) {
  */
 void SamState::updateAngles(const GPS& rocket_gps, double rocket_alt) {
     // rocket trig cache
+
     double rocket_sin_lat{std::sin(rocket_gps.lat * DEG2RAD)};
     double rocket_cos_lat{std::cos(rocket_gps.lat * DEG2RAD)};
     double rocket_sin_lon{std::sin(rocket_gps.lon * DEG2RAD)};

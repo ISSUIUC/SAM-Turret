@@ -18,6 +18,7 @@ DECLARE_THREAD(gps, RocketSystems *arg)
     {
         if (arg->sensors.gps.valid())
         {
+            //Serial.println("GPS valid");
             GPS reading = arg->sensors.gps.read();
             arg->rocket_data.sam_gps.update(reading);
         }
@@ -45,6 +46,7 @@ DECLARE_THREAD(sammy, RocketSystems *arg)
 {   
     Sammy::SamState sam{};
     // Set WiFi mode
+    int counter = 0; 
     WiFi.mode(WIFI_STA);
 
     // Initialize ESP-NOW 
@@ -74,9 +76,27 @@ DECLARE_THREAD(sammy, RocketSystems *arg)
             Sammy::broadcastAddress.data(), 
             (uint8_t*)sam.currAngles(), 
             sizeof(Sammy::Angles)
-        );
-        if (result != ESP_OK) 
+        ); 
+
+        // if (counter % 1000 == 0){
+        // Serial.println("rocket gps:" );
+        // Serial.println(arg->rocket_data.rocket_gps.getRecent().latitude);
+        // Serial.println("sam gps:" ); 
+        // Serial.println(arg->rocket_data.sam_gps.getRecent().latitude);
+        // Serial.println("New packet angles azimuth");
+        // Serial.println(sam.currAngles()->azimuth);
+        // Serial.println("New packet angles elevation"); 
+        // Serial.println(sam.currAngles()->elevation);
+        // }
+        counter++; 
+        if (result != ESP_OK && counter % 100 == 0) 
             Serial.println("Error sending data");
+        else if (counter % 100 == 0)
+            Serial.println("Okay!");
+            Serial.println("rocket gps:" );
+            Serial.println(arg->rocket_data.rocket_gps.getRecent().latitude);
+            Serial.println("sam gps:" ); 
+            Serial.println(arg->rocket_data.sam_gps.getRecent().latitude);
         THREAD_SLEEP(10);
     }
 }
@@ -91,6 +111,8 @@ DECLARE_THREAD(telemetry, RocketSystems *arg)
             gps_data.latitude = packet.lat;
             gps_data.longitude = packet.lon;
             gps_data.altitude = packet.alt;
+            //Serial.printf("Telemetry received: lat: %f, lon: %f, alt: %f\n", gps_data.latitude, gps_data.longitude, gps_data.altitude);
+
             arg->rocket_data.rocket_gps.update(gps_data);
 
             KalmanData kf_data;

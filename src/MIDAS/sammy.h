@@ -54,7 +54,7 @@ private:
     void updateAngles(const GPS& rocket_gps, double rocket_alt);
     Angles angles{};
     bool automatic{false};
-    bool lock{false};
+    bool lock{true};
 
     // struct for turret coords
     struct {

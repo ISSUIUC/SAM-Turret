@@ -130,6 +130,10 @@ void move_to_position() {
         Serial.print(motor_config.real_position[0]);
         Serial.print(' ');
         Serial.println(motor_config.real_position[1]);
+        // Serial.print("Target Position: ");
+        // Serial.print(motor_config.target_position[0]);
+        // Serial.print(' ');
+        // Serial.println(motor_config.target_position[1]);
         log_counter = 0;
     }
 }
